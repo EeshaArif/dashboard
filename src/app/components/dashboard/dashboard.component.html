@@ -1,3 +1,12 @@
 <div class="dashboard-wrapper">
-    <google-chart style="width: 70%; height: 100%;" (select)="onSelect($event)" [dynamicResize]="true" [type]="geoChartType" [data]="geoChartData" [columns]="geoChartColumns" [options]="geoChartOptions"></google-chart>
+        <google-chart *ngIf="!!geoChartData else loader" style="width: 70%; height: 100%;" (select)="onSelect($event)" [dynamicResize]="true" [type]="geoChartType" [data]="geoChartData" [columns]="geoChartColumns" [options]="geoChartOptions"></google-chart>
+    <div class="dashboard-country-charts">
+        <app-sidebar-stats [statistic]="statistic"></app-sidebar-stats>
+    </div>
 </div>
+
+<ng-template #loader>
+    <div style="width: 70%; height: 100%;">
+        <tui-loader [showLoader]="true"></tui-loader>
+    </div>
+</ng-template>

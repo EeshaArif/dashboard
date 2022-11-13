@@ -1,0 +1,40 @@
+<div class="sidebar-stats-wrapper">
+  <div class="sidebar-row-wrapper">
+    <tui-pie-chart
+      [value]="pieChartValues"
+      [tuiHintContent]="pieChartContent"
+    ></tui-pie-chart>
+    <tui-ring-chart
+      [value]="ringChartValues"
+      [(activeItemIndex)]="ringChartIndex"
+    >
+      <div>
+        {{
+          ringChartIndex === 0 || ringChartIndex
+            ? ringChartDisplayValues[ringChartIndex]
+            : this.unnormalizedStats.cases
+        }}
+      </div>
+      {{
+        ringChartIndex === 0 || ringChartIndex
+          ? this.ringChartLabels[ringChartIndex]
+          : "Cases"
+      }}
+    </tui-ring-chart>
+  </div>
+  <div class="sidebar-row-wrapper">
+    <tui-island>
+        <p class="tui-island__category">New Cases</p>
+        <h3 class="tui-island__title">{{'+'+unnormalizedStats.newCases}}</h3>
+    </tui-island>
+    <tui-island>
+        <p class="tui-island__category">New Deaths</p>
+        <h3 class="tui-island__title">{{'+'+unnormalizedStats.newDeaths}}</h3>
+    </tui-island>
+  </div>
+</div>
+
+<ng-template #pieChartContent let-index>
+  <div>{{ pieChartDisplayValues[index] }}</div>
+  <div>{{ pieChartLabels[index] }}</div>
+</ng-template>

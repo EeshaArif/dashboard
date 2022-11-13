@@ -13,6 +13,23 @@ import {
 } from 'src/app/models/covid-data.model';
 import { CovidDataService } from 'src/app/services/covid-data/covid-data.service';
 
+//   THE TASK WILL ASSESS YOU ON:
+// - UI & UX.
+// - API calling & authentication.
+// - Cashing and browser storage utilization.
+
+// YOU ARE TO USE ANGULAR TO COMPLETE THIS TASK.
+// - Angular 8 or above.
+
+// TASK:
+// You are to build a Dashboard showcasing the live progress of COVID-19 around the
+// world.
+// - Map to show the countries affected by Coronavirus with the ability to search or
+// filter by country.
+// - Use charts to display statistics for the spread of the coronavirus in affected
+// countries.
+// - Display historical monthly statistics based on country.
+
 const POLL_INTERVAL = 900000;
 
 @Component({
@@ -24,11 +41,12 @@ const POLL_INTERVAL = 900000;
 export class DashboardComponent implements OnInit {
   private statsSubscription: Subscription | null = null;
   public renderChart: boolean = false;
+  public statistic: CovidStatisticsResponse | undefined;
   private statistics: CovidStatisticsResponse[] = [];
   private geoMapStatistics: CovidStatisticsResponse[] = [];
   public geoChartType: ChartType = ChartType.GeoChart;
   public geoChartColumns = ['Country', 'Cases', 'Deaths'];
-  public geoChartData: (string | number)[][] = [];
+  public geoChartData: (string | number)[][] | null = null;
   public geoChartOptions = {
     colorAxis: { colors: ['blue', 'orange', 'red'] },
   };
@@ -39,6 +57,10 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.handleFetchStats();
+  }
+
+  private handleFetchStats() {
     // fetch data every 15 minutes
     this.statsSubscription = interval(POLL_INTERVAL)
       .pipe(
@@ -48,6 +70,9 @@ export class DashboardComponent implements OnInit {
       .subscribe({
         next: (value) => {
           this.statistics = value;
+          this.statistic = this.statistics.find(
+            (stat) => stat.country === (this.statistic?.country ?? 'All')
+          );
           this.geoMapStatistics = this.statistics
             .map((stat) => {
               const updatedCountry = this.getSupportedCountry(stat.country);
@@ -55,7 +80,7 @@ export class DashboardComponent implements OnInit {
             })
             .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
 
-          this.updateChartData();
+          this.updateGeoChartData();
         },
         error: (err) => {
           console.error('failed to fetch covid statistics', err);
@@ -63,20 +88,7 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  private getSupportedCountry(country: string): string | null {
-    let supportedCountryFormat: string =
-      country.indexOf('-') !== -1 ? country.split('-').join(' ') : country;
-
-    if (geoChartCountries.includes(supportedCountryFormat)) {
-      return supportedCountryFormat;
-    }
-    if (geoChartCountryMap.has(supportedCountryFormat)) {
-      return geoChartCountryMap.get(supportedCountryFormat) as string;
-    }
-    return null;
-  }
-
-  private updateChartData() {
+  private updateGeoChartData() {
     this.geoChartData = this.geoMapStatistics.map((stat) => [
       stat.country,
       stat.cases?.total ?? 0,
@@ -87,10 +99,25 @@ export class DashboardComponent implements OnInit {
   }
 
   public onSelect(value: ChartSelectionChangedEvent) {
-    console.error('selected', value);
-    // value.selection[
-    //   {column: null, row: 5}
-    // ]
+    if (!value.selection[0]?.row) {
+      console.warn('no country value selected, please click on the highlighted places of the map');
+      return;
+    }
+    this.statistic = this.geoMapStatistics[value.selection[0].row];
+    this.cdr.detectChanges();
+  }
+
+  private getSupportedCountry(country: string): string | null {
+    const supportedCountryFormat: string =
+      country.indexOf('-') !== -1 ? country.split('-').join(' ') : country;
+
+    if (geoChartCountries.includes(supportedCountryFormat)) {
+      return supportedCountryFormat;
+    }
+    if (geoChartCountryMap.has(supportedCountryFormat)) {
+      return geoChartCountryMap.get(supportedCountryFormat) as string;
+    }
+    return null;
   }
 
   ngOnDestroy(): void {

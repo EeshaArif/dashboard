@@ -24,12 +24,7 @@ export class CovidDataService {
     private http: HttpClient,
     private notificationService: NotificationService
   ) {}
-  // getGraderListV2Query =
-  // this.getGraderListV2Query.watch(params, {
-  //   fetchPolicy: "network-only",
-  //   nextFetchPolicy: "network-only",
-  //   pollInterval: POLL_INTERVAL
-  // });
+
   public getCovidStatistics() {
     return this.http.get<CovidStatisticsQueryResponse>(`${API_URL}/statistics`, this.generateHeaders()).pipe(
       map((result) => {

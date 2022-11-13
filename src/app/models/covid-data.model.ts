@@ -121,8 +121,6 @@ export const geoChartCountries = [
   'Oceania',
   'UK',
   'Guam',
-
-  /******* */
   'Isle of Man',
   'Eritrea',
   'Mali',
