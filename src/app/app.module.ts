@@ -6,6 +6,8 @@ import {
   TuiLoaderModule,
   TuiThemeNightModule,
   TuiModeModule,
+  TuiDataListModule,
+  TuiDropdownModule
 } from '@taiga-ui/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
@@ -20,16 +22,16 @@ import { NotificationService } from './services/notification/notification.servic
 import { SidebarStatsComponent } from './components/sidebar-stats/sidebar-stats.component';
 import {
   TuiPieChartModule,
-  TuiBarChartModule,
   TuiAxesModule,
   TuiRingChartModule,
-  TuiBarSetModule,
   TuiLineDaysChartModule
 } from '@taiga-ui/addon-charts';
-import { TuiIslandModule, TuiInputDateRangeModule } from '@taiga-ui/kit';
+import { TuiIslandModule, TuiInputDateRangeModule, TuiSelectModule } from '@taiga-ui/kit';
 import { NgHttpCachingModule, NgHttpCachingConfig } from 'ng-http-caching';
 import { LineGraphComponent } from './components/line-graph/line-graph.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CountryDropdownComponent } from './components/country-dropdown/country-dropdown.component';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 const CACHE_INTERVAL = 600000; // 10 minutes
 export const POLL_INTERVAL = 900000; // 15 minutes
@@ -39,7 +41,7 @@ const ngHttpCachingConfig: NgHttpCachingConfig = {
 };
 
 @NgModule({
-  declarations: [AppComponent, DashboardComponent, SidebarStatsComponent, LineGraphComponent],
+  declarations: [AppComponent, DashboardComponent, SidebarStatsComponent, LineGraphComponent, CountryDropdownComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -48,9 +50,13 @@ const ngHttpCachingConfig: NgHttpCachingConfig = {
     NgHttpCachingModule.forRoot(ngHttpCachingConfig),
     FormsModule,
     ReactiveFormsModule,
+    ScrollingModule,
     TuiRootModule,
     TuiThemeNightModule,
     TuiModeModule,
+    TuiSelectModule,
+    TuiDataListModule,
+    TuiDropdownModule,
     TuiIslandModule,
     TuiLoaderModule,
     TuiDialogModule,
@@ -58,8 +64,6 @@ const ngHttpCachingConfig: NgHttpCachingConfig = {
     TuiAlertModule,
     TuiHintModule,
     TuiPieChartModule,
-    TuiBarChartModule,
-    TuiBarSetModule,
     TuiAxesModule,
     TuiLineDaysChartModule,
     TuiRingChartModule,

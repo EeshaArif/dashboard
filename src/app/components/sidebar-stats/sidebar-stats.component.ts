@@ -5,7 +5,6 @@ import {
   Input,
   OnInit,
 } from '@angular/core';
-import { parseDateToLocaleDateString } from 'src/app/utils/date.utils';
 import { CovidStatisticsResponse } from '../../models/covid-data.model';
 import { CovidDataService } from '../../services/covid-data/covid-data.service';
 import { normalizeObject } from '../../utils/normalize.utils';
@@ -167,13 +166,5 @@ export class SidebarStatsComponent implements OnInit {
         console.error('failed to fetch country history', err);
       },
     });
-  }
-
-
-  public get dateString() {
-    if(this._statistic?.time){
-      return parseDateToLocaleDateString(new Date(this._statistic!.time).toString(), false);
-    }
-    return null;
   }
 }

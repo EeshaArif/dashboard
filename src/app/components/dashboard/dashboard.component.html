@@ -10,6 +10,16 @@
     [options]="geoChartOptions"
   ></google-chart>
   <div class="dashboard-country-charts">
+    <div
+      *ngIf="countries && countries.length > 0 && this.chosenStatistic"
+      class="dropdown"
+    >
+      <app-country-dropdown
+        [countries]="countries"
+        [selectedCountry]="this.chosenStatistic.country"
+        (handleCountryChanged)="onCountryChanged($event)"
+      ></app-country-dropdown>
+    </div>
     <app-sidebar-stats
       #sidebarStats
       [statistic]="chosenStatistic"

@@ -9,30 +9,10 @@ import { ChartSelectionChangedEvent, ChartType } from 'angular-google-charts';
 import { interval, startWith, Subscription, switchMap } from 'rxjs';
 import { POLL_INTERVAL } from 'src/app/app.module';
 import { LocalStorageService } from 'src/app/services/local-storage/local-storage.service';
-import {
-  CovidStatisticsResponse,
-} from '../../models/covid-data.model';
+import { CovidStatisticsResponse } from '../../models/covid-data.model';
 import { CovidDataService } from '../../services/covid-data/covid-data.service';
 import { getSupportedCountry } from '../../utils/geo-chart.utils';
 import { SidebarStatsComponent } from '../sidebar-stats/sidebar-stats.component';
-
-//   THE TASK WILL ASSESS YOU ON:
-// - UI & UX.
-// - API calling & authentication.
-// - Cashing and browser storage utilization.
-
-// YOU ARE TO USE ANGULAR TO COMPLETE THIS TASK.
-// - Angular 8 or above.
-
-// TASK:
-// You are to build a Dashboard showcasing the live progress of COVID-19 around the
-// world.
-// - Map to show the countries affected by Coronavirus with the ability to search or
-// filter by country.
-// - Use charts to display statistics for the spread of the coronavirus in affected
-// countries.
-// - Display historical monthly statistics based on country.
-
 
 @Component({
   selector: 'app-dashboard',
@@ -54,6 +34,7 @@ export class DashboardComponent implements OnInit {
   };
 
   public isLoading: boolean = true;
+  public countries: string[] = [];
 
   @ViewChild('sidebarStats')
   sidebarStatsRef?: SidebarStatsComponent;
@@ -68,7 +49,6 @@ export class DashboardComponent implements OnInit {
     this.handleFetchStats();
   }
 
-
   private handleFetchStats() {
     // fetch data every 15 minutes (polling)
     this.statsSubscription = interval(POLL_INTERVAL)
@@ -78,12 +58,6 @@ export class DashboardComponent implements OnInit {
       )
       .subscribe({
         next: (newStats) => {
-          // select country previously selected
-          const country = this.localStorageService.getItem('country');
-
-          this.chosenStatistic = newStats.find(
-            (stat) => stat.country === (country ?? this.chosenStatistic?.country ?? 'All')
-          );
           this.handleNewStats(newStats);
           this.updateGeoChartData(newStats);
         },
@@ -96,20 +70,38 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateGeoChartData(newStats: CovidStatisticsResponse[]) {
-     // update geoMap with supported format
-     this.geoMapStatistics = newStats
-     .map((stat) => {
-       const updatedCountry = getSupportedCountry(stat.country);
-       return { ...stat, country: updatedCountry };
-     })
-     .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
+    // update geoMap with supported format
+    this.geoMapStatistics = newStats
+      .map((stat) => {
+        const updatedCountry = getSupportedCountry(stat.country);
+        return { ...stat, country: updatedCountry };
+      })
+      .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
 
-     // map required data to table format to display
-    this.geoChartData = this.geoMapStatistics.map((stat) => [
-      stat.country,
-      stat.cases?.total ?? 0,
-      stat.deaths?.total ?? 0,
-    ]);
+    // select country previously selected
+    const country = this.localStorageService.getItem('country');
+
+    this.chosenStatistic = this.geoMapStatistics.find(
+      (stat) =>
+        stat.country === (country ?? this.chosenStatistic?.country ?? 'All')
+    );
+    if (!this.chosenStatistic) {
+      this.chosenStatistic = this.geoMapStatistics.find(
+        (stat) => stat.country === 'All'
+      );
+    }
+    if (!this.countries || this.countries.length <= 0) {
+      this.countries = this.geoMapStatistics.map((stat) => stat.country);
+    }
+
+    // map required data to table format to display
+    this.geoChartData = this.geoMapStatistics
+      .filter((stats) => stats.country !== 'All')
+      .map((stat) => [
+        stat.country,
+        stat.cases?.total ?? 0,
+        stat.deaths?.total ?? 0,
+      ]);
 
     this.renderChart = true;
     this.isLoading = false;
@@ -132,7 +124,20 @@ export class DashboardComponent implements OnInit {
       return;
     }
     this.chosenStatistic = this.geoMapStatistics[value.selection[0].row];
-    this.localStorageService.setItem('country', getSupportedCountry(this.chosenStatistic.country));
+    this.localStorageService.setItem('country', this.chosenStatistic.country);
+    this.cdr.detectChanges();
+  }
+
+  public onCountryChanged(country: string) {
+    const newStat = this.geoMapStatistics.find(
+      (stat) => stat.country === country
+    );
+    if (!newStat) {
+      console.error('failed to choose country, it is not supported');
+      return;
+    }
+    this.chosenStatistic = newStat;
+    this.localStorageService.setItem('country', this.chosenStatistic.country);
     this.cdr.detectChanges();
   }
 

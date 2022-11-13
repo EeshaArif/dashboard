@@ -1,0 +1,22 @@
+<tui-select
+  *ngIf="countries"
+  class="b-form"
+  [(ngModel)]="chosenCountry"
+>
+  Country
+  <cdk-virtual-scroll-viewport
+    *tuiDataList
+    tuiScrollable
+    class="scroll"
+    [itemSize]="44"
+  >
+    <tui-data-list>
+      <button tuiOption (click)="onChooseCountry('All')" [value]="'All'">
+        {{ "All" }}
+      </button>
+      <button *cdkVirtualFor="let item of countries" tuiOption (click)="onChooseCountry(item)" [value]="item">
+        {{ item }}
+      </button>
+    </tui-data-list>
+  </cdk-virtual-scroll-viewport>
+</tui-select>

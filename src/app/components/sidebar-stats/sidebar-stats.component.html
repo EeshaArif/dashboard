@@ -1,13 +1,4 @@
 <div class="sidebar-stats-wrapper">
-  <div class="sidebar-heading">
-    <h3>
-      {{ dateString }}
-    </h3>
-    <h3>
-      {{ country }}
-    </h3>
-
-  </div>
   <div>
     <tui-pie-chart
       [value]="pieChartValues"
@@ -32,7 +23,7 @@
     </tui-ring-chart>
   </div>
   <div>
-    <app-line-graph style="width: 20rem;" [history]="history"></app-line-graph>
+    <app-line-graph style="width: 20rem" [history]="history"></app-line-graph>
   </div>
 </div>
 

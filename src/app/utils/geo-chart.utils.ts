@@ -4,6 +4,9 @@ import {
 } from '../models/geo-chart.model';
 
 export function getSupportedCountry(country: string): string | null {
+  if (country === 'All') {
+    return country;
+  }
   const supportedCountryFormat: string =
     country.indexOf('-') !== -1 ? country.split('-').join(' ') : country;
 
