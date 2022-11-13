@@ -1,12 +1,59 @@
-<div class="dashboard-wrapper">
-        <google-chart *ngIf="!!geoChartData else loader" style="width: 70%; height: 100%;" (select)="onSelectCountry($event)" [dynamicResize]="true" [type]="geoChartType" [data]="geoChartData" [columns]="geoChartColumns" [options]="geoChartOptions"></google-chart>
-    <div class="dashboard-country-charts">
-        <app-sidebar-stats #sidebarStats [statistic]="chosenStatistic"></app-sidebar-stats>
-    </div>
+<div *ngIf="!isLoading; else skeletonTmpl" class="dashboard-wrapper">
+  <google-chart
+    *ngIf="!!geoChartData; else loader"
+    style="width: 70%; height: 100%"
+    (select)="onSelectCountry($event)"
+    [dynamicResize]="true"
+    [type]="geoChartType"
+    [data]="geoChartData"
+    [columns]="geoChartColumns"
+    [options]="geoChartOptions"
+  ></google-chart>
+  <div class="dashboard-country-charts">
+    <app-sidebar-stats
+      #sidebarStats
+      [statistic]="chosenStatistic"
+    ></app-sidebar-stats>
+  </div>
 </div>
 
 <ng-template #loader>
-    <div style="width: 70%; height: 100%;">
-        <tui-loader [showLoader]="true"></tui-loader>
+  <div style="width: 70%; height: 100%">
+    <tui-loader [showLoader]="true"></tui-loader>
+  </div>
+</ng-template>
+
+<ng-template #skeletonTmpl>
+  <div class="dashboard-wrapper">
+    <div style="width: 70%; align-items: center">
+      <div
+        class="tui-skeleton skeleton-line"
+        style="width: 60%; height: 60%; margin: 15%"
+      ></div>
     </div>
+    <div class="dashboard-country-charts" style="width: 30%; padding: 3rem">
+      <div
+        class="tui-skeleton skeleton-line"
+        style="height: 8rem; margin-bottom: 3rem"
+      ></div>
+
+      <ng-container *ngTemplateOutlet="lineGraphSkeleton"></ng-container>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #lineGraphSkeleton>
+  <div class="skeleton">
+    <div class="tui-skeleton skeleton-line" style="height: 3rem"></div>
+    <div
+      class="tui-skeleton skeleton-line"
+      style="margin-top: 1rem; height: 8rem; width: 1rem"
+    ></div>
+    <div class="tui-skeleton skeleton-line" style="height: 1rem"></div>
+    <div
+      class="tui-skeleton skeleton-line"
+      style="margin-top: 1rem; height: 8rem; width: 1rem"
+    ></div>
+    <div class="tui-skeleton skeleton-line" style="height: 1rem"></div>
+  </div>
 </ng-template>

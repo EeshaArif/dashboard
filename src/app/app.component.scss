@@ -1,0 +1,12 @@
+.skeleton {
+	margin: 3em;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	height: calc(100% - 80px);
+
+	.skeleton-line {
+		height: 25px;
+	}
+
+}

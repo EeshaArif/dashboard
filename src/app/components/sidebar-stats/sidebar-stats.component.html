@@ -1,5 +1,13 @@
 <div class="sidebar-stats-wrapper">
   <div class="sidebar-row-wrapper">
+    <h3>
+      {{ dateString ?? '' }}
+    </h3>
+    <h3>
+      {{ country }}
+    </h3>
+  </div>
+  <div class="sidebar-row-wrapper">
     <tui-pie-chart
       [value]="pieChartValues"
       [tuiHintContent]="pieChartContent"
@@ -23,14 +31,7 @@
     </tui-ring-chart>
   </div>
   <div class="sidebar-row-wrapper">
-    <tui-island>
-        <p class="tui-island__category">New Cases</p>
-        <h3 class="tui-island__title">{{'+'+unnormalizedStats.newCases}}</h3>
-    </tui-island>
-    <tui-island>
-        <p class="tui-island__category">New Deaths</p>
-        <h3 class="tui-island__title">{{'+'+unnormalizedStats.newDeaths}}</h3>
-    </tui-island>
+    <app-line-graph style="width: 20rem;" [history]="history"></app-line-graph>
   </div>
 </div>
 

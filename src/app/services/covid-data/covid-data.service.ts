@@ -54,7 +54,7 @@ export class CovidDataService {
   public getCovidStatistics() {
     return this.http
       .get<CovidStatisticsQueryResponse>(`${API_URL}/statistics`, {
-        headers: this.generateHeaders('history'),
+        headers: this.generateHeaders('history', true),
       })
       .pipe(
         map((result) => {
@@ -75,12 +75,16 @@ export class CovidDataService {
     return throwError(() => new Error(message));
   }
 
-  private generateHeaders = (tag: string) => {
-    return new HttpHeaders({
+  private generateHeaders = (tag: string, disallowCache: boolean = false) => {
+    const headers: any = {
       'Content-Type': 'application/json',
       'x-rapidapi-host': 'covid-193.p.rapidapi.com',
       'x-rapidapi-key': '809c8c48f7msh6730025a57fda0dp12e700jsnc859de5b6db5',
       [NgHttpCachingHeaders.TAG]: tag,
-    });
+    };
+    if (disallowCache) {
+      headers[NgHttpCachingHeaders.DISALLOW_CACHE] = '1';
+    }
+    return new HttpHeaders(headers);
   };
 }

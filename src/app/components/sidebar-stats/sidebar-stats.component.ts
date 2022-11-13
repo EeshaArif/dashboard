@@ -5,6 +5,7 @@ import {
   Input,
   OnInit,
 } from '@angular/core';
+import { parseDateToLocaleDateString } from 'src/app/utils/date.utils';
 import { CovidStatisticsResponse } from '../../models/covid-data.model';
 import { CovidDataService } from '../../services/covid-data/covid-data.service';
 import { normalizeObject } from '../../utils/normalize.utils';
@@ -43,13 +44,16 @@ export class SidebarStatsComponent implements OnInit {
   set statistic(stat: CovidStatisticsResponse | undefined) {
     if (stat) {
       this._statistic = stat;
+      this.country = stat.country;
       this.handleStatCharts();
       this.handleFetchHistory(stat.country);
     }
   }
-  private _statistic?: CovidStatisticsResponse;
 
+  private _statistic?: CovidStatisticsResponse;
+  public country: string = 'All'
   public historyMap: Map<string, CovidStatisticsResponse[]> = new Map();
+  public history: CovidStatisticsResponse[] = [];
   private normalizedStats: Stats = {
     ...defaultStats,
   };
@@ -66,8 +70,6 @@ export class SidebarStatsComponent implements OnInit {
   public ringChartLabels: string[] = [];
   public ringChartIndex = NaN;
 
-  public barSetValues: number[] = [];
-
   constructor(
     private cdr: ChangeDetectorRef,
     //  private ngHttpCachingService: NgHttpCachingService,
@@ -76,28 +78,8 @@ export class SidebarStatsComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  private handleFetchHistory(country: string = 'All') {
-    // console.error(this.ngHttpCachingService.getStore()); // check cached data
-
-    // check not needed as response is cached
-    if (this.historyMap.has(country)) {
-      this.handleHistoryCharts();
-      return;
-    }
-
-    this.covidDataService.getCountryHistory(country).subscribe({
-      next: (value) => {
-        this.historyMap.set(country, value);
-        this.handleHistoryCharts();
-      },
-      error: (err) => {
-        console.error('failed to fetch country history', err);
-      },
-    });
-  }
-
   private handleHistoryCharts() {
-    console.error('handle hist charts');
+    this.history = this.historyMap.get(this.country)!;
     this.cdr.detectChanges();
   }
 
@@ -105,14 +87,6 @@ export class SidebarStatsComponent implements OnInit {
     this.normalizeData();
     this.createPieChart();
     this.createRingChart();
-    this.createBarChart();
-  }
-
-  private createBarChart() {
-    this.barSetValues = [
-      this.normalizedStats.newCases,
-      this.normalizedStats.newDeaths,
-    ];
     this.cdr.detectChanges();
   }
 
@@ -172,5 +146,34 @@ export class SidebarStatsComponent implements OnInit {
 
     this.normalizedStats = { ...this.unnormalizedStats };
     normalizeObject([1000, 10000], this.normalizedStats);
+  }
+
+  private handleFetchHistory(country: string = 'All') {
+    // console.error(this.ngHttpCachingService.getStore()); // check cached data
+
+    // check not needed as response is cached but we are optimistically updating the values
+    // with fetching statistics every 15 min
+    if (this.historyMap.has(country)) {
+      this.handleHistoryCharts();
+      return;
+    }
+
+    this.covidDataService.getCountryHistory(country).subscribe({
+      next: (value) => {
+        this.historyMap.set(country, value);
+        this.handleHistoryCharts();
+      },
+      error: (err) => {
+        console.error('failed to fetch country history', err);
+      },
+    });
+  }
+
+
+  public get dateString() {
+    if(this._statistic?.time){
+      return parseDateToLocaleDateString(new Date(this._statistic!.time).toString(), true);
+    }
+    return null;
   }
 }

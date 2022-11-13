@@ -52,6 +52,8 @@ export class DashboardComponent implements OnInit {
     colorAxis: { colors: ['blue', 'orange', 'red'] },
   };
 
+  public isLoading: boolean = true;
+
   @ViewChild('sidebarStats')
   sidebarStatsRef?: SidebarStatsComponent;
 
@@ -86,6 +88,8 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => {
           console.error('failed to fetch covid statistics', err);
+          this.isLoading = false;
+          this.cdr.detectChanges();
         },
       });
   }
@@ -107,12 +111,13 @@ export class DashboardComponent implements OnInit {
     ]);
 
     this.renderChart = true;
+    this.isLoading = false;
     this.cdr.detectChanges();
   }
 
   private handleNewStats(newStats: CovidStatisticsResponse[]) {
     if (!this.sidebarStatsRef) {
-      console.error('failed to update new stats, sidebar ref does not exist');
+      console.warn('failed to update new stats, sidebar ref does not exist');
       return;
     }
     this.sidebarStatsRef!.handleNewStats(newStats);
