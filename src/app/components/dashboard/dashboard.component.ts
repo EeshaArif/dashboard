@@ -49,7 +49,8 @@ export class DashboardComponent implements OnInit {
   public geoChartColumns = ['Country', 'Cases', 'Deaths'];
   public geoChartData: (string | number)[][] | null = null;
   public geoChartOptions = {
-    colorAxis: { colors: ['blue', 'orange', 'red'] },
+    colorAxis: { colors: ['blue', 'orange', '#ea1c23'] },
+    backgroundColor: '#959595',
   };
 
   public isLoading: boolean = true;
@@ -131,7 +132,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
     this.chosenStatistic = this.geoMapStatistics[value.selection[0].row];
-    this.localStorageService.setItem('country', this.chosenStatistic.country);
+    this.localStorageService.setItem('country', getSupportedCountry(this.chosenStatistic.country));
     this.cdr.detectChanges();
   }
 

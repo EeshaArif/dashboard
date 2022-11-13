@@ -1,9 +1,8 @@
 .sidebar-stats-wrapper {
     display: flex;
     flex-direction: column;
-
-    .sidebar-row-wrapper {
-        margin: 1rem;
+    > div {
+        margin: 0.5rem 1rem 1rem;
         display: flex;
         flex-direction: row;
         justify-content: space-around;
@@ -12,6 +11,12 @@
             margin: 0rem;
         }
     }
+    .sidebar-heading {
+        margin: 1rem 1rem 0.5rem;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
 }
 
 

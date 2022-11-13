@@ -172,7 +172,7 @@ export class SidebarStatsComponent implements OnInit {
 
   public get dateString() {
     if(this._statistic?.time){
-      return parseDateToLocaleDateString(new Date(this._statistic!.time).toString(), true);
+      return parseDateToLocaleDateString(new Date(this._statistic!.time).toString(), false);
     }
     return null;
   }

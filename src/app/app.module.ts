@@ -4,6 +4,8 @@ import {
   TuiAlertModule,
   TuiHintModule,
   TuiLoaderModule,
+  TuiThemeNightModule,
+  TuiModeModule,
 } from '@taiga-ui/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
@@ -47,6 +49,8 @@ const ngHttpCachingConfig: NgHttpCachingConfig = {
     FormsModule,
     ReactiveFormsModule,
     TuiRootModule,
+    TuiThemeNightModule,
+    TuiModeModule,
     TuiIslandModule,
     TuiLoaderModule,
     TuiDialogModule,

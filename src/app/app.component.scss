@@ -1,3 +1,5 @@
+@import '~@taiga-ui/core/styles/taiga-ui-local';
+
 .skeleton {
 	margin: 3em;
 	display: flex;
@@ -8,5 +10,13 @@
 	.skeleton-line {
 		height: 25px;
 	}
+
+}
+
+:host::ng-deep {
+    tui-root {
+        background-color: var(--tui-base-01);
+        color: var(--tui-text-01-nightly);
+    }
 
 }
