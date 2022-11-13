@@ -5,9 +5,12 @@ import {
   Input,
   OnInit,
 } from '@angular/core';
-import { CovidStatisticsResponse } from 'src/app/models/covid-data.model';
+import { CovidStatisticsResponse } from '../../models/covid-data.model';
+import { CovidDataService } from '../../services/covid-data/covid-data.service';
+import { normalizeObject } from '../../utils/normalize.utils';
+import { NgHttpCachingService } from 'ng-http-caching';
 
-type stats = {
+type Stats = {
   deaths: number;
   cases: number;
   tests: number;
@@ -17,7 +20,6 @@ type stats = {
   newCases: number;
   newDeaths: number;
 };
-type statKeys = keyof stats;
 
 @Component({
   selector: 'app-sidebar-stats',
@@ -30,11 +32,15 @@ export class SidebarStatsComponent implements OnInit {
   set statistic(stat: CovidStatisticsResponse | undefined) {
     if (stat) {
       this._statistic = stat;
-      this.handleGraphs();
+      this.handleStatCharts();
+      this.handleFetchHistory(stat.country);
     }
   }
   private _statistic?: CovidStatisticsResponse;
-  private normalizedStats: stats = {
+
+  public historyMap: Map<string, CovidStatisticsResponse[]> = new Map();
+
+  private normalizedStats: Stats = {
     deaths: 0,
     cases: 0,
     tests: 0,
@@ -45,7 +51,7 @@ export class SidebarStatsComponent implements OnInit {
     newDeaths: 0,
   };
 
-  public unnormalizedStats: stats = {
+  public unnormalizedStats: Stats = {
     deaths: 0,
     cases: 0,
     tests: 0,
@@ -67,11 +73,39 @@ export class SidebarStatsComponent implements OnInit {
 
   public barSetValues: number[] = [];
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private ngHttpCachingService: NgHttpCachingService,
+    private covidDataService: CovidDataService
+  ) {}
 
   ngOnInit(): void {}
 
-  private handleGraphs() {
+  private handleFetchHistory(country: string = 'All') {
+    console.error(this.ngHttpCachingService.getStore());
+    // check not needed as response is cached
+    if (this.historyMap.has(country)) {
+      this.handleHistoryCharts();
+      return;
+    }
+    this.covidDataService.getCountryHistory(country).subscribe({
+      next: (value) => {
+        this.historyMap.set(country, value);
+        this.handleHistoryCharts();
+        console.error('setting value',value);
+      },
+      error: (err) => {
+        console.error('failed to fetch country history', err);
+      },
+    });
+  }
+
+  private handleHistoryCharts() {
+    console.error('handle hist charts');
+    this.cdr.detectChanges();
+  }
+
+  private handleStatCharts() {
     console.error('STATS', this._statistic);
     this.normalizeData();
     this.createPieChart();
@@ -118,6 +152,18 @@ export class SidebarStatsComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  public handleNewStats(newStats: CovidStatisticsResponse[]) {
+    newStats.forEach((stat) => {
+      if (this.historyMap.has(stat.country)) {
+        (this.historyMap.get(stat.country) as CovidStatisticsResponse[]).push(
+          stat
+        );
+      } else if (stat.country === this._statistic?.country) {
+        this.handleFetchHistory(this._statistic?.country);
+      }
+    });
+  }
+
   private normalizeData(): void {
     this.unnormalizedStats = {
       deaths: this._statistic?.deaths.total ?? 0,
@@ -127,39 +173,11 @@ export class SidebarStatsComponent implements OnInit {
       active: this._statistic?.cases.active ?? 0,
       critical: this._statistic?.cases.critical ?? 0,
       newCases: parseInt(this._statistic?.cases.new?.slice(1) ?? '0'),
-      newDeaths: parseInt(this._statistic?.deaths.new?.slice(1) ?? '0')
+      newDeaths: parseInt(this._statistic?.deaths.new?.slice(1) ?? '0'),
     };
 
-    this.normalizedStats = {
-      deaths: this._statistic?.deaths.total ?? 0,
-      cases: this._statistic?.cases.total ?? 0,
-      tests: this._statistic?.tests.total ?? 0,
-      recovered: this._statistic?.cases.recovered ?? 0,
-      active: this._statistic?.cases.active ?? 0,
-      critical: this._statistic?.cases.critical ?? 0,
-      newCases: parseInt(this._statistic?.cases.new?.slice(1) ?? '0'),
-      newDeaths: parseInt(this._statistic?.deaths.new?.slice(1) ?? '0')
-    };
-
-    const range = [1000, 10000];
-    const values = Object.values(this.normalizedStats);
-    const min = Math.min.apply(Math, values);
-    const max = Math.max.apply(Math, values);
-    Object.keys(this.normalizedStats).forEach((elem) => {
-      const el = elem as statKeys;
-      this.normalizedStats[el] = this.normalizeWithRange(range, min, max, this.normalizedStats[el]);
-    });
+    this.normalizedStats = { ...this.unnormalizedStats };
+    normalizeObject([1000, 10000], this.normalizedStats);
     console.error(this.normalizedStats);
-  }
-
-  private normalizeWithRange(range: number[], min: number, max: number, value: number): number {
-    const variation = (range[1] - range[0]) / (max - min);
-    const val = parseInt(
-      (
-        (value === 0 ? 0 : range[0]) +
-        (value - min) * variation
-      ).toFixed(2)
-    );
-    return val;
   }
 }

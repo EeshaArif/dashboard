@@ -13,6 +13,13 @@ import { NotificationService } from './services/notification/notification.servic
 import { SidebarStatsComponent } from './components/sidebar-stats/sidebar-stats.component';
 import {TuiPieChartModule, TuiBarChartModule, TuiAxesModule, TuiRingChartModule, TuiBarSetModule} from '@taiga-ui/addon-charts';
 import { TuiIslandModule } from '@taiga-ui/kit';
+import { NgHttpCachingModule, NgHttpCachingConfig } from 'ng-http-caching';
+
+export const UPDATE_INTERVAL = 900000; // 15 minutes
+
+const ngHttpCachingConfig: NgHttpCachingConfig = {
+  lifetime: UPDATE_INTERVAL // cache expires after 15 minutes
+};
 
 @NgModule({
   declarations: [AppComponent, DashboardComponent, SidebarStatsComponent],
@@ -21,6 +28,7 @@ import { TuiIslandModule } from '@taiga-ui/kit';
     AppRoutingModule,
     BrowserAnimationsModule,
     HttpClientModule,
+    NgHttpCachingModule.forRoot(ngHttpCachingConfig),
     TuiRootModule,
     TuiIslandModule,
     TuiLoaderModule,

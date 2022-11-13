@@ -8,6 +8,7 @@ import { throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CovidStatisticsResponse } from '../../models/covid-data.model';
 import { NotificationService } from '../notification/notification.service';
+import { NgHttpCachingHeaders } from 'ng-http-caching';
 
 const API_URL = 'https://covid-193.p.rapidapi.com';
 
@@ -25,18 +26,47 @@ export class CovidDataService {
     private notificationService: NotificationService
   ) {}
 
-  public getCovidStatistics() {
-    return this.http.get<CovidStatisticsQueryResponse>(`${API_URL}/statistics`, this.generateHeaders()).pipe(
-      map((result) => {
-        if (result.errors && result.errors.length > 0) {
-          throw result.errors;
-        }
-        return result.response as CovidStatisticsResponse[];
-      }),
-      catchError((err, _) => {
-        return this.handleError(err, 'get covid statistics');
+  public getCountryHistory(country: string = 'All', day?: string) {
+    const params: { country: string; day?: string } = {
+      country: country,
+    };
+    if (day) {
+      params.day = day;
+    }
+    return this.http
+      .get<CovidStatisticsQueryResponse>(`${API_URL}/history`, {
+        params: params,
+        headers: this.generateHeaders(country),
       })
-    );
+      .pipe(
+        map((result) => {
+          if (result.errors && result.errors.length > 0) {
+            throw result.errors;
+          }
+          return result.response as CovidStatisticsResponse[];
+        }),
+        catchError((err, _) => {
+          return this.handleError(err, `get ${country} history`);
+        })
+      );
+  }
+
+  public getCovidStatistics() {
+    return this.http
+      .get<CovidStatisticsQueryResponse>(`${API_URL}/statistics`, {
+        headers: this.generateHeaders('history'),
+      })
+      .pipe(
+        map((result) => {
+          if (result.errors && result.errors.length > 0) {
+            throw result.errors;
+          }
+          return result.response as CovidStatisticsResponse[];
+        }),
+        catchError((err, _) => {
+          return this.handleError(err, 'get covid statistics');
+        })
+      );
   }
 
   private handleError(error: HttpErrorResponse, action: string) {
@@ -45,13 +75,12 @@ export class CovidDataService {
     return throwError(() => new Error(message));
   }
 
-  private generateHeaders = () => {
-    return {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'x-rapidapi-host': 'covid-193.p.rapidapi.com',
-        'x-rapidapi-key': '809c8c48f7msh6730025a57fda0dp12e700jsnc859de5b6db5',
-      }),
-    };
+  private generateHeaders = (tag: string) => {
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      'x-rapidapi-host': 'covid-193.p.rapidapi.com',
+      'x-rapidapi-key': '809c8c48f7msh6730025a57fda0dp12e700jsnc859de5b6db5',
+      [NgHttpCachingHeaders.TAG]: tag,
+    });
   };
 }

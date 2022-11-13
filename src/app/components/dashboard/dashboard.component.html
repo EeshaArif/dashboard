@@ -1,7 +1,7 @@
 <div class="dashboard-wrapper">
         <google-chart *ngIf="!!geoChartData else loader" style="width: 70%; height: 100%;" (select)="onSelect($event)" [dynamicResize]="true" [type]="geoChartType" [data]="geoChartData" [columns]="geoChartColumns" [options]="geoChartOptions"></google-chart>
     <div class="dashboard-country-charts">
-        <app-sidebar-stats [statistic]="statistic"></app-sidebar-stats>
+        <app-sidebar-stats #sidebarStats [statistic]="chosenStatistic"></app-sidebar-stats>
     </div>
 </div>
 

@@ -3,15 +3,18 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  ViewChild,
 } from '@angular/core';
 import { ChartSelectionChangedEvent, ChartType } from 'angular-google-charts';
 import { interval, startWith, Subscription, switchMap } from 'rxjs';
+import { UPDATE_INTERVAL } from 'src/app/app.module';
+import { LocalStorageService } from 'src/app/services/local-storage/local-storage.service';
 import {
   CovidStatisticsResponse,
-  geoChartCountries,
-  geoChartCountryMap,
-} from 'src/app/models/covid-data.model';
-import { CovidDataService } from 'src/app/services/covid-data/covid-data.service';
+} from '../../models/covid-data.model';
+import { CovidDataService } from '../../services/covid-data/covid-data.service';
+import { getSupportedCountry } from '../../utils/geo-chart.utils';
+import { SidebarStatsComponent } from '../sidebar-stats/sidebar-stats.component';
 
 //   THE TASK WILL ASSESS YOU ON:
 // - UI & UX.
@@ -30,7 +33,6 @@ import { CovidDataService } from 'src/app/services/covid-data/covid-data.service
 // countries.
 // - Display historical monthly statistics based on country.
 
-const POLL_INTERVAL = 900000;
 
 @Component({
   selector: 'app-dashboard',
@@ -41,8 +43,7 @@ const POLL_INTERVAL = 900000;
 export class DashboardComponent implements OnInit {
   private statsSubscription: Subscription | null = null;
   public renderChart: boolean = false;
-  public statistic: CovidStatisticsResponse | undefined;
-  private statistics: CovidStatisticsResponse[] = [];
+  public chosenStatistic: CovidStatisticsResponse | undefined;
   private geoMapStatistics: CovidStatisticsResponse[] = [];
   public geoChartType: ChartType = ChartType.GeoChart;
   public geoChartColumns = ['Country', 'Cases', 'Deaths'];
@@ -51,8 +52,12 @@ export class DashboardComponent implements OnInit {
     colorAxis: { colors: ['blue', 'orange', 'red'] },
   };
 
+  @ViewChild('sidebarStats')
+  sidebarStatsRef?: SidebarStatsComponent;
+
   constructor(
     private covidDataService: CovidDataService,
+    private localStorageService: LocalStorageService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -60,22 +65,25 @@ export class DashboardComponent implements OnInit {
     this.handleFetchStats();
   }
 
+
   private handleFetchStats() {
-    // fetch data every 15 minutes
-    this.statsSubscription = interval(POLL_INTERVAL)
+    // fetch data every 15 minutes (polling)
+    this.statsSubscription = interval(UPDATE_INTERVAL)
       .pipe(
         startWith(0),
         switchMap(() => this.covidDataService.getCovidStatistics())
       )
       .subscribe({
-        next: (value) => {
-          this.statistics = value;
-          this.statistic = this.statistics.find(
-            (stat) => stat.country === (this.statistic?.country ?? 'All')
+        next: (newStats) => {
+
+          const country = this.localStorageService.getItem('country');
+          this.chosenStatistic = newStats.find(
+            (stat) => stat.country === (country ?? this.chosenStatistic?.country ?? 'All')
           );
-          this.geoMapStatistics = this.statistics
+          this.handleNewStats(newStats);
+          this.geoMapStatistics = newStats
             .map((stat) => {
-              const updatedCountry = this.getSupportedCountry(stat.country);
+              const updatedCountry = getSupportedCountry(stat.country);
               return { ...stat, country: updatedCountry };
             })
             .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
@@ -86,6 +94,13 @@ export class DashboardComponent implements OnInit {
           console.error('failed to fetch covid statistics', err);
         },
       });
+  }
+
+  private handleNewStats(newStats: CovidStatisticsResponse[]) {
+    if (!this.sidebarStatsRef) {
+      console.error('failed to update new stats, sidebar ref does not exist');
+    }
+    this.sidebarStatsRef?.handleNewStats(newStats);
   }
 
   private updateGeoChartData() {
@@ -100,24 +115,14 @@ export class DashboardComponent implements OnInit {
 
   public onSelect(value: ChartSelectionChangedEvent) {
     if (!value.selection[0]?.row) {
-      console.warn('no country value selected, please click on the highlighted places of the map');
+      console.warn(
+        'no country value selected, please click on the highlighted places of the map'
+      );
       return;
     }
-    this.statistic = this.geoMapStatistics[value.selection[0].row];
+    this.chosenStatistic = this.geoMapStatistics[value.selection[0].row];
+    this.localStorageService.setItem('country', this.chosenStatistic.country);
     this.cdr.detectChanges();
-  }
-
-  private getSupportedCountry(country: string): string | null {
-    const supportedCountryFormat: string =
-      country.indexOf('-') !== -1 ? country.split('-').join(' ') : country;
-
-    if (geoChartCountries.includes(supportedCountryFormat)) {
-      return supportedCountryFormat;
-    }
-    if (geoChartCountryMap.has(supportedCountryFormat)) {
-      return geoChartCountryMap.get(supportedCountryFormat) as string;
-    }
-    return null;
   }
 
   ngOnDestroy(): void {
