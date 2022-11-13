@@ -15,10 +15,11 @@ import {TuiPieChartModule, TuiBarChartModule, TuiAxesModule, TuiRingChartModule,
 import { TuiIslandModule } from '@taiga-ui/kit';
 import { NgHttpCachingModule, NgHttpCachingConfig } from 'ng-http-caching';
 
-export const UPDATE_INTERVAL = 900000; // 15 minutes
+export const CACHE_INTERVAL = 600000; // 10 minutes
+export const POLL_INTERVAL = 900000; // 15 minutes
 
 const ngHttpCachingConfig: NgHttpCachingConfig = {
-  lifetime: UPDATE_INTERVAL // cache expires after 15 minutes
+  lifetime: CACHE_INTERVAL // cache expires after 10 minutes
 };
 
 @NgModule({

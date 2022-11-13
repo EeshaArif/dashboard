@@ -8,7 +8,7 @@ import {
 import { CovidStatisticsResponse } from '../../models/covid-data.model';
 import { CovidDataService } from '../../services/covid-data/covid-data.service';
 import { normalizeObject } from '../../utils/normalize.utils';
-import { NgHttpCachingService } from 'ng-http-caching';
+// import { NgHttpCachingService } from 'ng-http-caching';
 
 type Stats = {
   deaths: number;
@@ -19,6 +19,17 @@ type Stats = {
   critical: number;
   newCases: number;
   newDeaths: number;
+};
+
+const defaultStats: Stats = {
+  deaths: 0,
+  cases: 0,
+  tests: 0,
+  recovered: 0,
+  active: 0,
+  critical: 0,
+  newCases: 0,
+  newDeaths: 0,
 };
 
 @Component({
@@ -39,27 +50,11 @@ export class SidebarStatsComponent implements OnInit {
   private _statistic?: CovidStatisticsResponse;
 
   public historyMap: Map<string, CovidStatisticsResponse[]> = new Map();
-
   private normalizedStats: Stats = {
-    deaths: 0,
-    cases: 0,
-    tests: 0,
-    recovered: 0,
-    active: 0,
-    critical: 0,
-    newCases: 0,
-    newDeaths: 0,
+    ...defaultStats,
   };
-
   public unnormalizedStats: Stats = {
-    deaths: 0,
-    cases: 0,
-    tests: 0,
-    recovered: 0,
-    active: 0,
-    critical: 0,
-    newCases: 0,
-    newDeaths: 0,
+    ...defaultStats,
   };
 
   public pieChartValues: number[] = [];
@@ -75,24 +70,25 @@ export class SidebarStatsComponent implements OnInit {
 
   constructor(
     private cdr: ChangeDetectorRef,
-    private ngHttpCachingService: NgHttpCachingService,
+    //  private ngHttpCachingService: NgHttpCachingService,
     private covidDataService: CovidDataService
   ) {}
 
   ngOnInit(): void {}
 
   private handleFetchHistory(country: string = 'All') {
-    console.error(this.ngHttpCachingService.getStore());
+    // console.error(this.ngHttpCachingService.getStore()); // check cached data
+
     // check not needed as response is cached
     if (this.historyMap.has(country)) {
       this.handleHistoryCharts();
       return;
     }
+
     this.covidDataService.getCountryHistory(country).subscribe({
       next: (value) => {
         this.historyMap.set(country, value);
         this.handleHistoryCharts();
-        console.error('setting value',value);
       },
       error: (err) => {
         console.error('failed to fetch country history', err);
@@ -106,7 +102,6 @@ export class SidebarStatsComponent implements OnInit {
   }
 
   private handleStatCharts() {
-    console.error('STATS', this._statistic);
     this.normalizeData();
     this.createPieChart();
     this.createRingChart();
@@ -118,7 +113,6 @@ export class SidebarStatsComponent implements OnInit {
       this.normalizedStats.newCases,
       this.normalizedStats.newDeaths,
     ];
-    console.error(this.barSetValues);
     this.cdr.detectChanges();
   }
 
@@ -178,6 +172,5 @@ export class SidebarStatsComponent implements OnInit {
 
     this.normalizedStats = { ...this.unnormalizedStats };
     normalizeObject([1000, 10000], this.normalizedStats);
-    console.error(this.normalizedStats);
   }
 }

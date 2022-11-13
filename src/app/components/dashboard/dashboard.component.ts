@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ChartSelectionChangedEvent, ChartType } from 'angular-google-charts';
 import { interval, startWith, Subscription, switchMap } from 'rxjs';
-import { UPDATE_INTERVAL } from 'src/app/app.module';
+import { POLL_INTERVAL } from 'src/app/app.module';
 import { LocalStorageService } from 'src/app/services/local-storage/local-storage.service';
 import {
   CovidStatisticsResponse,
@@ -68,27 +68,21 @@ export class DashboardComponent implements OnInit {
 
   private handleFetchStats() {
     // fetch data every 15 minutes (polling)
-    this.statsSubscription = interval(UPDATE_INTERVAL)
+    this.statsSubscription = interval(POLL_INTERVAL)
       .pipe(
         startWith(0),
         switchMap(() => this.covidDataService.getCovidStatistics())
       )
       .subscribe({
         next: (newStats) => {
-
+          // select country previously selected
           const country = this.localStorageService.getItem('country');
+
           this.chosenStatistic = newStats.find(
             (stat) => stat.country === (country ?? this.chosenStatistic?.country ?? 'All')
           );
           this.handleNewStats(newStats);
-          this.geoMapStatistics = newStats
-            .map((stat) => {
-              const updatedCountry = getSupportedCountry(stat.country);
-              return { ...stat, country: updatedCountry };
-            })
-            .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
-
-          this.updateGeoChartData();
+          this.updateGeoChartData(newStats);
         },
         error: (err) => {
           console.error('failed to fetch covid statistics', err);
@@ -96,24 +90,35 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  private handleNewStats(newStats: CovidStatisticsResponse[]) {
-    if (!this.sidebarStatsRef) {
-      console.error('failed to update new stats, sidebar ref does not exist');
-    }
-    this.sidebarStatsRef?.handleNewStats(newStats);
-  }
+  private updateGeoChartData(newStats: CovidStatisticsResponse[]) {
+     // update geoMap with supported format
+     this.geoMapStatistics = newStats
+     .map((stat) => {
+       const updatedCountry = getSupportedCountry(stat.country);
+       return { ...stat, country: updatedCountry };
+     })
+     .filter((stat) => !!stat.country) as CovidStatisticsResponse[];
 
-  private updateGeoChartData() {
+     // map required data to table format to display
     this.geoChartData = this.geoMapStatistics.map((stat) => [
       stat.country,
       stat.cases?.total ?? 0,
       stat.deaths?.total ?? 0,
     ]);
+
     this.renderChart = true;
     this.cdr.detectChanges();
   }
 
-  public onSelect(value: ChartSelectionChangedEvent) {
+  private handleNewStats(newStats: CovidStatisticsResponse[]) {
+    if (!this.sidebarStatsRef) {
+      console.error('failed to update new stats, sidebar ref does not exist');
+      return;
+    }
+    this.sidebarStatsRef!.handleNewStats(newStats);
+  }
+
+  public onSelectCountry(value: ChartSelectionChangedEvent) {
     if (!value.selection[0]?.row) {
       console.warn(
         'no country value selected, please click on the highlighted places of the map'
