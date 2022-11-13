@@ -1,6 +1,6 @@
 <ng-container *ngIf="!isLineChartLoading; else loader">
   <p class="b-form">
-    <tui-input-date-range [maxLength]="maxLength" [(ngModel)]="range">
+    <tui-input-date-range [maxLength]="maxLength" [(ngModel)]="range" (ngModelChange)="onRangeChange($event)">
       Range
     </tui-input-date-range>
   </p>

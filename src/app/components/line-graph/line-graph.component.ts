@@ -17,6 +17,7 @@ import {
 import { TUI_MONTHS } from '@taiga-ui/core';
 import { Observable, map } from 'rxjs';
 import { CovidStatisticsResponse } from 'src/app/models/covid-data.model';
+import { LocalStorageService } from 'src/app/services/local-storage/local-storage.service';
 import { toTuiDatetime } from '../../utils/date.utils';
 
 @Component({
@@ -43,12 +44,12 @@ export class LineGraphComponent implements OnInit {
   }
   private _history: CovidStatisticsResponse[] = [];
 
-
   ngOnInit(): void {}
 
   constructor(
     @Inject(TUI_MONTHS) private readonly months$: Observable<readonly string[]>,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private localStorage: LocalStorageService
   ) {}
 
   private createLineGraphs() {
@@ -60,17 +61,32 @@ export class LineGraphComponent implements OnInit {
       return [tuiDateTime![0].toString(), value];
     });
     this.mapDateToStat = new Map(mapping);
-    this.range = new TuiDayRange(
-      toTuiDatetime(this._history[this._history.length - 1].day)![0],
-      toTuiDatetime(this._history[this._history.length - 1].day)![0].append({
-        month: 2,
-      })
-    );
-    this.casesValue = this.computeValue(this.range, true);
-    this.deathsValue = this.computeValue(this.range, false);
+
+    this.setRange();
+    this.casesValue = this.computeValue(this.range!, true);
+    this.deathsValue = this.computeValue(this.range!, false);
 
     this.isLineChartLoading = false;
     this.cdr.detectChanges();
+  }
+
+  private setRange() {
+    const localRange: { from: string; to: string } | null =
+      this.localStorage.getItem('range');
+    if (localRange) {
+      this.range = new TuiDayRange(
+        toTuiDatetime(localRange.from)![0],
+        toTuiDatetime(localRange.to)![0]
+      );
+      return;
+    }
+    const latestTuiDay = this._history[this._history.length - 1].day;
+    this.range = new TuiDayRange(
+      toTuiDatetime(latestTuiDay)![0],
+      toTuiDatetime(latestTuiDay)![0].append({
+        month: 2,
+      })
+    );
   }
 
   @tuiPure
@@ -97,17 +113,17 @@ export class LineGraphComponent implements OnInit {
         const stat = this.mapDateToStat.get(newDate.toString());
         const value = isCase ? stat?.cases.new : stat?.deaths.new;
         let updatedValue = parseInt(value?.slice(1) ?? '0');
-        updatedValue = updatedValue > 100 ? parseInt(value?.toString().slice(0,2)!): updatedValue; // todo: normalize
-        const newObj: [TuiDay, number] = [
-          newDate,
-          updatedValue,
-        ];
+        updatedValue =
+          updatedValue > 100
+            ? parseInt(value?.toString().slice(0, 2)!)
+            : updatedValue; // todo: normalize
+        const newObj: [TuiDay, number] = [newDate, updatedValue];
         return [...array, newObj];
       }, []);
   }
 
   readonly yStringify: TuiStringHandler<number> = (y) =>
-  `+${y.toLocaleString(`en-US`, { maximumFractionDigits: 0 })}`;
+    `+${y.toLocaleString(`en-US`, { maximumFractionDigits: 0 })}`;
 
   readonly xStringify$: Observable<TuiStringHandler<TuiDay>> =
     this.months$.pipe(
@@ -117,4 +133,15 @@ export class LineGraphComponent implements OnInit {
             `${months[month]}, ${day}`
       )
     );
+
+  public onRangeChange(value: any) {
+    if (!this.range) {
+      return;
+    }
+    this.casesValue = this.computeValue(this.range!, true);
+    this.deathsValue = this.computeValue(this.range!, false);
+    this.localStorage.setItem('range', this.range);
+
+    this.cdr.detectChanges();
+  }
 }
